@@ -7,20 +7,14 @@
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:visibility="gone">
 
     <Button
         android:id="@+id/buttonSwitchCamera"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="切换摄像头" />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content">
 
     <Spinner
         android:id="@+id/spinnerTask"

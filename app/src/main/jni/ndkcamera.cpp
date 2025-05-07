@@ -262,7 +262,8 @@ int NdkCamera::open(int _camera_facing)
                 orientation = (int)e.data.i32[0];
             }
 
-            camera_orientation = orientation;
+//            camera_orientation = orientation;
+            camera_orientation = 0;
 
             ACameraMetadata_free(camera_metadata);
 
@@ -501,22 +502,22 @@ void NdkCameraWindow::on_image(const unsigned char* nv21, int nv21_width, int nv
                 float acceleration_z = e[num_event - 1].acceleration.z;
 //                 __android_log_print(ANDROID_LOG_WARN, "NdkCameraWindow", "x = %f, y = %f, z = %f", x, y, z);
 
-                if (acceleration_y > 7)
-                {
-                    accelerometer_orientation = 0;
-                }
-                if (acceleration_x < -7)
-                {
-                    accelerometer_orientation = 90;
-                }
-                if (acceleration_y < -7)
-                {
-                    accelerometer_orientation = 180;
-                }
-                if (acceleration_x > 7)
-                {
-                    accelerometer_orientation = 270;
-                }
+//                if (acceleration_y > 7)
+//                {
+//                    accelerometer_orientation = 0;
+//                }
+//                if (acceleration_x < -7)
+//                {
+//                    accelerometer_orientation = 90;
+//                }
+//                if (acceleration_y < -7)
+//                {
+//                    accelerometer_orientation = 180;
+//                }
+//                if (acceleration_x > 7)
+//                {
+//                    accelerometer_orientation = 270;
+//                }
             }
         }
     }

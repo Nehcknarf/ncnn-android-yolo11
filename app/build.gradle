@@ -4,7 +4,7 @@ plugins {
 
 android {
     namespace 'com.tencent.yolo11ncnn'
-    compileSdk 33
+    compileSdk 36
 
     defaultConfig {
         applicationId "com.tencent.yolo11ncnn"
@@ -21,7 +21,7 @@ android {
 
     externalNativeBuild {
         cmake {
-            version "3.31.5"
+            version "3.31.6"
             path file('src/main/jni/CMakeLists.txt')
         }
     }
@@ -35,4 +35,6 @@ android {
             useLegacyPackaging true
         }
     }
+
+    ndkVersion '28.1.13356709'
 }

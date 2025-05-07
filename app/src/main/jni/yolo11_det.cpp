@@ -86,6 +86,7 @@
 //
 
 #include "yolo11.h"
+#include "myfontface.h"
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -301,7 +302,7 @@ static void generate_proposals(const ncnn::Mat& pred, const std::vector<int>& st
 int YOLO11_det::detect(const cv::Mat& rgb, std::vector<Object>& objects)
 {
     const int target_size = det_target_size;//640;
-    const float prob_threshold = 0.25f;
+    const float prob_threshold = 0.65f;
     const float nms_threshold = 0.45f;
 
     int img_w = rgb.cols;
@@ -400,15 +401,7 @@ int YOLO11_det::detect(const cv::Mat& rgb, std::vector<Object>& objects)
 int YOLO11_det::draw(cv::Mat& rgb, const std::vector<Object>& objects)
 {
     static const char* class_names[] = {
-        "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat", "traffic light",
-        "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow",
-        "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee",
-        "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard",
-        "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple",
-        "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "couch",
-        "potted plant", "bed", "dining table", "toilet", "tv", "laptop", "mouse", "remote", "keyboard", "cell phone",
-        "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear",
-        "hair drier", "toothbrush"
+            "保留", "盐酸艾司氯氨酮注射液[2ml:50mg]", "注射用盐酸瑞芬太尼[1mg]", "枸橼酸芬太尼注射液[2ml:0.1mg]", "枸橼酸舒芬太尼注射液[1ml:50ug]", "盐酸吗啡注射液[1ml:10mg]", "盐酸麻黄碱注射液[1ml:30mg]", "盐酸派替啶注射液[2ml:100mg]"
     };
 
     static cv::Scalar colors[] = {
@@ -460,8 +453,8 @@ int YOLO11_det::draw(cv::Mat& rgb, const std::vector<Object>& objects)
         cv::rectangle(rgb, cv::Rect(cv::Point(x, y), cv::Size(label_size.width, label_size.height + baseLine)),
                       cv::Scalar(255, 255, 255), -1);
 
-        cv::putText(rgb, text, cv::Point(x, y + label_size.height),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0));
+        MyFontFace myfont;
+        cv::putText(rgb, text, cv::Point(x, y + label_size.height), cv::Scalar(0, 0, 0), myfont, 10);
     }
 
     return 0;
