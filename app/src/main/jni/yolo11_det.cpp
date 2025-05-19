@@ -401,7 +401,8 @@ int YOLO11_det::detect(const cv::Mat& rgb, std::vector<Object>& objects)
 int YOLO11_det::draw(cv::Mat& rgb, const std::vector<Object>& objects)
 {
     static const char* class_names[] = {
-            "保留", "盐酸艾司氯氨酮注射液[2ml:50mg]", "注射用盐酸瑞芬太尼[1mg]", "枸橼酸芬太尼注射液[2ml:0.1mg]", "枸橼酸舒芬太尼注射液[1ml:50ug]", "盐酸吗啡注射液[1ml:10mg]", "盐酸麻黄碱注射液[1ml:30mg]", "盐酸派替啶注射液[2ml:100mg]"
+//            "保留", "盐酸艾司氯氨酮注射液[2ml:50mg]", "注射用盐酸瑞芬太尼[1mg]", "枸橼酸芬太尼注射液[2ml:0.1mg]", "枸橼酸舒芬太尼注射液[1ml:50ug]", "盐酸吗啡注射液[1ml:10mg]", "盐酸麻黄碱注射液[1ml:30mg]", "盐酸派替啶注射液[2ml:100mg]"
+            "0","1","2","3","4","5","6","7"
     };
 
     static cv::Scalar colors[] = {
@@ -430,7 +431,7 @@ int YOLO11_det::draw(cv::Mat& rgb, const std::vector<Object>& objects)
     {
         const Object& obj = objects[i];
 
-        const cv::Scalar& color = colors[i % 19];
+        const cv::Scalar& color = colors[obj.label % 19];
 
         // fprintf(stderr, "%d = %.5f at %.2f %.2f %.2f x %.2f\n", obj.label, obj.prob,
                 // obj.rect.x, obj.rect.y, obj.rect.width, obj.rect.height);
@@ -438,7 +439,8 @@ int YOLO11_det::draw(cv::Mat& rgb, const std::vector<Object>& objects)
         cv::rectangle(rgb, obj.rect, color);
 
         char text[256];
-        sprintf(text, "%s %.1f%%", class_names[obj.label], obj.prob * 100);
+//        sprintf(text, "%s %.1f%%", class_names[obj.label], obj.prob * 100);
+        sprintf(text, "%s", class_names[obj.label]);
 
         int baseLine = 0;
         cv::Size label_size = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);

@@ -44,7 +44,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback
     private Spinner spinnerCPUGPU;
     private int current_task = 0;
     private int current_model = 6;
-    private int current_cpugpu = 0;
+    private int current_cpugpu = 2;
 
     private SurfaceView cameraView;
 

@@ -146,7 +146,7 @@ void MyNdkCamera::on_image_render(cv::Mat& rgb) const
     cv::Mat M = cv::getPerspectiveTransform(src_points, dst_points);
 
     cv::Mat warped_rgb;
-    cv::warpPerspective(rgb, warped_rgb, M, output_size, cv::INTER_CUBIC);
+    cv::warpPerspective(rgb, warped_rgb, M, output_size, cv::INTER_LINEAR);
     rgb = warped_rgb;
     // yolo11
     {
