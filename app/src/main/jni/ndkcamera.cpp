@@ -19,6 +19,7 @@
 #include <android/log.h>
 
 #include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 
 #include "mat.h"
 
@@ -435,6 +436,25 @@ NdkCameraWindow::NdkCameraWindow() : NdkCamera()
     sensor_manager = ASensorManager_getInstance();
 
     accelerometer_sensor = ASensorManager_getDefaultSensor(sensor_manager, ASENSOR_TYPE_ACCELEROMETER);
+
+    // 初始化AprilTag检测器
+//    tf = tagStandard41h12_create(); // 您可以选择其他标签族
+//    td = apriltag_detector_create();
+//    apriltag_detector_add_family(td, tf);
+//
+//    // 可选的AprilTag检测器参数配置:
+//     td->quad_decimate = 1.0f; // 图像降采样因子
+//     td->nthreads = 4;         // 使用的线程数
+//    // td->debug = 0;            // 是否开启调试输出
+//    // td->refine_edges = 1;     // 是否细化边缘
+//
+//    has_last_known_points = false;
+    // 可以预设一组固定的点作为最初的 last_known_src_points
+    // last_known_src_points.emplace_back(20.0f, 70.0f);
+    // last_known_src_points.emplace_back(610.0f, 67.0f);
+    // last_known_src_points.emplace_back(480.0f, 402.0f);
+    // last_known_src_points.emplace_back(160.0f, 410.0f);
+    // has_last_known_points = true; // 如果预设了
 }
 
 NdkCameraWindow::~NdkCameraWindow()
@@ -450,6 +470,18 @@ NdkCameraWindow::~NdkCameraWindow()
         ASensorManager_destroyEventQueue(sensor_manager, sensor_event_queue);
         sensor_event_queue = 0;
     }
+
+    // 释放AprilTag资源
+//    if (td) {
+//        apriltag_detector_destroy(td);
+//        td = nullptr;
+//    }
+//    if (tf) {
+//        // 注意：根据您创建family的函数来选择destroy函数
+//        // 例如，如果是 tagStandard41h12_create()，则用 tagStandard41h12_destroy()
+//        tagStandard41h12_destroy(tf); // 确保这个函数名和创建时匹配
+//        tf = nullptr;
+//    }
 
     if (win)
     {
@@ -719,8 +751,171 @@ void NdkCameraWindow::on_image(const unsigned char* nv21, int nv21_width, int nv
     // nv21_croprotated to rgb
     cv::Mat rgb(roi_h, roi_w, CV_8UC3);
     ncnn::yuv420sp2rgb(nv21_croprotated.data, roi_w, roi_h, rgb.data);
+    // 透视变换
+    const int output_width = 640;
+    const int output_height = 480;
+    cv::Size output_size(output_width, output_height);
 
-    on_image_render(rgb);
+    std::vector<cv::Point2f> src_points;
+    src_points.emplace_back(20.0f, 70.0f); // 左上
+    src_points.emplace_back(610.0f, 67.0f); // 右上
+    src_points.emplace_back(480.0f,  402.0f); // 右下
+    src_points.emplace_back(160.0f,  410.0f); // 左下
+
+    std::vector<cv::Point2f> dst_points;
+    dst_points.emplace_back(0.0f, 0.0f); // 左上
+    dst_points.emplace_back(output_width, 0.0f); // 右上
+    dst_points.emplace_back(output_width, output_height); // 右下
+    dst_points.emplace_back(0.0f, output_height); // 左下
+
+    cv::Mat M = cv::getPerspectiveTransform(src_points, dst_points);
+
+    cv::warpPerspective(rgb, rgb, M, output_size, cv::INTER_LINEAR);
+
+//    // --- AprilTag 检测与透视变换 ---
+//    const int output_width = 640; // 透视变换后的目标宽度
+//    const int output_height = 480; // 透视变换后的目标高度
+//    cv::Size output_size(output_width, output_height);
+//    std::vector<cv::Point2f> dst_points;
+//    dst_points.emplace_back(0.0f, 0.0f);
+//    dst_points.emplace_back(output_width, 0.0f);
+//    dst_points.emplace_back(output_width, output_height);
+//    dst_points.emplace_back(0.0f, output_height);
+//
+//    std::vector<cv::Point2f> src_points_from_tags(4);
+//    bool found_tag0 = false, found_tag1 = false, found_tag2 = false, found_tag3 = false;
+//
+//    // 1. 将 rgb 图像转为灰度图用于AprilTag检测
+//    cv::Mat gray_image;
+//    cv::cvtColor(rgb, gray_image, cv::COLOR_RGB2GRAY);
+//
+//    // 2. 准备 image_u8_t 结构体给 AprilTag 检测器
+//    image_u8_t img_header = {
+//            .width = gray_image.cols,
+//            .height = gray_image.rows,
+//            .stride = gray_image.cols, // 对于cv::Mat连续内存的灰度图，stride 通常等于 cols
+//            .buf = gray_image.data
+//    };
+//
+//    // 3. 执行 AprilTag 检测
+//    // 注意：td 是 NdkCameraWindow 的成员变量，需要用 const_cast 或者将 on_image 声明为非 const
+//    // 如果 on_image 必须是 const, 你可能需要将 td 声明为 mutable apriltag_detector_t* td;
+//    // 或者将AprilTag检测相关代码移到一个非const辅助函数中。
+//    // 这里我们假设 on_image 可以是非 const，或者 td 是 mutable
+//    // 为了简单起见，我们假设 td 可以直接在 const 方法中使用（实际中可能需要调整）
+//    // 或者更好的做法是移除 on_image 的 const 限定符，因为它修改了内部状态（如 last_known_src_points）
+//    // 并调用了非const的AprilTag函数
+//
+//    // 临时的解决方案，如果on_image必须是const，且td不是mutable:
+//    // apriltag_detector_t* current_td = const_cast<NdkCameraWindow*>(this)->td;
+//    // zarray_t *detections = apriltag_detector_detect(current_td, &img_header);
+//
+//    // 更好的方案是移除 on_image 的 const
+//    zarray_t *detections = apriltag_detector_detect(td, &img_header);
+//
+//
+//    // 4. 提取角点
+//    for (int i = 0; i < zarray_size(detections); i++) {
+//        apriltag_detection_t *det;
+//        zarray_get(detections, i, &det);
+//
+//        // 假设AprilTag库角点顺序 p[0]左下, p[1]右下, p[2]右上, p[3]左上 (逆时针)
+//        // 您需要根据实际情况调整 det->p[index]
+//        if (det->id == 3) { // 左上 Tag ID
+//            src_points_from_tags[0] = cv::Point2f(det->p[3][0], det->p[3][1]); // 使用该Tag的左上角
+//            found_tag0 = true;
+//        } else if (det->id == 2) { // 右上 Tag ID
+//            src_points_from_tags[1] = cv::Point2f(det->p[2][0], det->p[2][1]); // 使用该Tag的右上角
+//            found_tag1 = true;
+//        } else if (det->id == 1) { // 右下 Tag ID
+//            src_points_from_tags[2] = cv::Point2f(det->p[1][0], det->p[1][1]); // 使用该Tag的右下角
+//            found_tag2 = true;
+//        } else if (det->id == 0) { // 左下 Tag ID
+//            src_points_from_tags[3] = cv::Point2f(det->p[0][0], det->p[0][1]); // 使用该Tag的左下角
+//            found_tag3 = true;
+//        }
+//        // 可选: 在rgb图像上绘制检测到的Tag，用于调试
+////         line(rgb, cv::Point(det->p[0][0], det->p[0][1]), cv::Point(det->p[1][0], det->p[1][1]), cv::Scalar(0,0,255), 2);
+////         line(rgb, cv::Point(det->p[1][0], det->p[1][1]), cv::Point(det->p[2][0], det->p[2][1]), cv::Scalar(0,255,0), 2);
+////         line(rgb, cv::Point(det->p[2][0], det->p[2][1]), cv::Point(det->p[3][0], det->p[3][1]), cv::Scalar(255,0,0), 2);
+////         line(rgb, cv::Point(det->p[3][0], det->p[3][1]), cv::Point(det->p[0][0], det->p[0][1]), cv::Scalar(255,0,255), 2);
+//    }
+//
+//    apriltag_detections_destroy(detections); // 释放检测结果
+//
+//    std::vector<cv::Point2f> current_src_points;
+//    bool use_perspective_transform = false;
+//
+//    if (found_tag0 && found_tag1 && found_tag2 && found_tag3) {
+//        current_src_points = src_points_from_tags;
+//        // 如果 on_image 不是 const，可以直接修改成员变量
+//        // const_cast<NdkCameraWindow*>(this)->last_known_src_points = src_points_from_tags;
+//        // const_cast<NdkCameraWindow*>(this)->has_last_known_points = true;
+//        use_perspective_transform = true;
+//        __android_log_print(ANDROID_LOG_INFO, "NdkCameraWindow", "All AprilTags found. Using dynamic perspective transform.");
+//    } else {
+//        // 如果不是所有Tag都被找到，尝试使用上次已知的好点
+//        // if (const_cast<NdkCameraWindow*>(this)->has_last_known_points) {
+//        //     current_src_points = const_cast<NdkCameraWindow*>(this)->last_known_src_points;
+//        //     use_perspective_transform = true;
+//        //     __android_log_print(ANDROID_LOG_WARN, "NdkCameraWindow", "Not all AprilTags found. Using last known good points.");
+//        // } else {
+//        // 或者使用固定的默认点 (您原来的点)
+//        current_src_points.clear();
+//        current_src_points.emplace_back(20.0f, 70.0f); // 左上
+//        current_src_points.emplace_back(610.0f, 67.0f); // 右上
+//        current_src_points.emplace_back(480.0f,  402.0f); // 右下
+//        current_src_points.emplace_back(160.0f,  410.0f); // 左下
+//        use_perspective_transform = true; // 仍然执行变换，但使用固定点
+//        __android_log_print(ANDROID_LOG_WARN, "NdkCameraWindow", "Not all AprilTags found. Using fixed default points.");
+//        // }
+//    }
+//
+//    if (use_perspective_transform) {
+//        cv::Mat M = cv::getPerspectiveTransform(current_src_points, dst_points);
+//        cv::warpPerspective(rgb, rgb, M, output_size, cv::INTER_LINEAR); // rgb 图像现在是 output_width x output_height
+//    }
+//    // --- AprilTag 与透视变换结束 ---
+
+    // 手部检测逻辑
+    bool hand_detected_flag = false;
+    cv::Mat hsv_image, skin_mask;
+
+    cv::cvtColor(rgb, hsv_image, cv::COLOR_RGB2HSV);
+
+    // 定义肤色的HSV范围 (这些值可能需要根据光照和肤色进行调整)
+    cv::Scalar lower_skin_hsv(0, 110, 65);
+    cv::Scalar upper_skin_hsv(106, 255, 255);
+//    cv::Scalar lower_skin_hsv(0, 5, 100);
+//    cv::Scalar upper_skin_hsv(17, 255, 255);
+    cv::inRange(hsv_image, lower_skin_hsv, upper_skin_hsv, skin_mask);
+
+    // 查找轮廓
+    std::vector<std::vector<cv::Point>> contours;
+    std::vector<cv::Vec4i> hierarchy;
+    cv::findContours(skin_mask, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
+
+    // 遍历所有找到的轮廓
+    for (size_t i = 0; i < contours.size(); i++)
+    {
+        double area = cv::contourArea(contours[i]);
+        // 设置一个面积阈值来过滤掉小的噪声轮廓
+        if (area > 2500) // 假设手的面积（像素）
+        {
+            hand_detected_flag = true;
+            cv::drawContours(rgb, contours, static_cast<int>(i), cv::Scalar(0, 255, 0), 2); // 绿色轮廓表示检测到的手
+            break; // 检测到一只手就足够了
+        }
+    }
+
+    // 根据手部检测结果，条件执行YOLO检测并显示文本
+    if (hand_detected_flag)
+    {
+        cv::putText(rgb, "Hand Detected!", cv::Point(10, 40), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(255, 0, 0), -1);
+    }
+    else {
+        on_image_render(rgb);
+    }
 
     // rotate to native window orientation
     cv::Mat rgb_render(render_h, render_w, CV_8UC3);

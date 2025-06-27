@@ -302,7 +302,7 @@ static void generate_proposals(const ncnn::Mat& pred, const std::vector<int>& st
 int YOLO11_det::detect(const cv::Mat& rgb, std::vector<Object>& objects)
 {
     const int target_size = det_target_size;//640;
-    const float prob_threshold = 0.65f;
+    const float prob_threshold = 0.86f;
     const float nms_threshold = 0.45f;
 
     int img_w = rgb.cols;

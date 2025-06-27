@@ -25,6 +25,12 @@
 
 #include <opencv2/core/core.hpp>
 
+//extern "C" {
+//#include "apriltag/apriltag.h"
+//#include "apriltag/tagStandard41h12.h"
+//#include "apriltag/common/getopt.h"
+//}
+
 class NdkCamera
 {
 public:
@@ -75,6 +81,11 @@ private:
     mutable ASensorEventQueue* sensor_event_queue;
     const ASensor* accelerometer_sensor;
     ANativeWindow* win;
+    // Apriltag
+//    apriltag_family_t *tf;
+//    apriltag_detector_t *td;
+//    std::vector<cv::Point2f> last_known_src_points;
+//    bool has_last_known_points;
 };
 
 #endif // NDKCAMERA_H

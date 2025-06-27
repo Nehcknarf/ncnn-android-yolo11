@@ -33,12 +33,6 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-extern "C" {
-#include "apriltag/apriltag.h"
-#include "apriltag/tagStandard41h12.h"
-#include "apriltag/common/getopt.h"
-}
-
 #if __ARM_NEON
 #include <arm_neon.h>
 #endif // __ARM_NEON
@@ -127,27 +121,6 @@ public:
 
 void MyNdkCamera::on_image_render(cv::Mat& rgb) const
 {
-    const int output_width = 640;
-    const int output_height = 480;
-    cv::Size output_size(output_width, output_height);
-
-    std::vector<cv::Point2f> src_points;
-    src_points.emplace_back(20.0f, 70.0f); // 左上
-    src_points.emplace_back(610.0f, 67.0f); // 右上
-    src_points.emplace_back(480.0f,  402.0f); // 右下
-    src_points.emplace_back(160.0f,  410.0f); // 左下
-
-    std::vector<cv::Point2f> dst_points;
-    dst_points.emplace_back(0.0f, 0.0f); // 左上
-    dst_points.emplace_back(output_width, 0.0f); // 右上
-    dst_points.emplace_back(output_width, output_height); // 右下
-    dst_points.emplace_back(0.0f, output_height); // 左下
-
-    cv::Mat M = cv::getPerspectiveTransform(src_points, dst_points);
-
-    cv::Mat warped_rgb;
-    cv::warpPerspective(rgb, warped_rgb, M, output_size, cv::INTER_LINEAR);
-    rgb = warped_rgb;
     // yolo11
     {
         ncnn::MutexLockGuard g(lock);
